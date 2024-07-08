@@ -33,9 +33,14 @@ AFTER_SHA=$(git rev-parse HEAD)
 echo "Before SHA: $BEFORE_SHA"
 echo "After SHA: $AFTER_SHA"
 
-echo "Getting list of modified and deleted files..."
-git diff --name-only $BEFORE_SHA $AFTER_SHA > changed_files.txt
-git diff --diff-filter=D --name-only $BEFORE_SHA $AFTER_SHA > deleted_files.txt || touch deleted_files.txt
+if [ "$BEFORE_SHA" == "$AFTER_SHA" ]; then
+  echo "First commit detected, archiving all files..."
+  find . -type f | sed 's|^\./||' > changed_files.txt
+else
+  echo "Getting list of modified and deleted files..."
+  git diff --name-only $BEFORE_SHA $AFTER_SHA > changed_files.txt
+  git diff --diff-filter=D --name-only $BEFORE_SHA $AFTER_SHA > deleted_files.txt || touch deleted_files.txt
+fi
 
 echo "Files modified since last commit:"
 cat changed_files.txt
