@@ -42,6 +42,13 @@ else
   git diff --diff-filter=D --name-only $BEFORE_SHA $AFTER_SHA > deleted_files.txt || touch deleted_files.txt
 fi
 
+# Filter out deleted files from changed files
+if [ -s deleted_files.txt ]; then
+  echo "Removing deleted files from changed files list..."
+  grep -Fxv -f deleted_files.txt changed_files.txt > changed_files_filtered.txt
+  mv changed_files_filtered.txt changed_files.txt
+fi
+
 if [ -s changed_files.txt ]; then
 
   echo "Files modified since last commit:"
