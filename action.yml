@@ -32,8 +32,9 @@ runs:
       shell: bash
     - name: Run script
       run: |
-        /entrypoint.sh
+        ./entrypoint.sh
       shell: bash
+      working-directory: .
       env:
         FTP_HOST: ${{ inputs.ftp_host }}
         FTP_USER: ${{ inputs.ftp_user }}
