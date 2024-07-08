@@ -1,3 +1,4 @@
+
 # git-ftp-sync
 
 Automatize o envio de arquivos via FTP do seu repositório GitHub usando este GitHub Action. O `git-ftp-sync` verifica os arquivos modificados e deletados desde o último commit e sincroniza essas mudanças com um servidor FTP.
@@ -40,18 +41,16 @@ jobs:
       - name: Set environment variables
         run: |
           echo "Setting environment variables based on the branch..."
+          ENVIRONMENT=""
           if [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
-            echo "Setting environment for develop branch"
-            echo "FTP_HOST=${{ secrets.FTP_HOST_EXTRANET_QA }}" >> $GITHUB_ENV
-            echo "FTP_USER=${{ secrets.FTP_USER_EXTRANET_QA }}" >> $GITHUB_ENV
-            echo "FTP_PASS=${{ secrets.FTP_PASS_EXTRANET_QA }}" >> $GITHUB_ENV
-          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; então
-            echo "Setting environment for main branch"
-            echo "FTP_HOST=${{ secrets.FTP_HOST_INTRANET_PD }}" >> $GITHUB_ENV
-            echo "FTP_USER=${{ secrets.FTP_USER_INTRANET_PD }}" >> $GITHUB_ENV
-            echo "FTP_PASS=${{ secrets.FTP_PASS_INTRANET_PD }}" >> $GITHUB_ENV
+            ENVIRONMENT="QA"
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            ENVIRONMENT="PD"
           fi
-          echo "Environment variables set."
+          echo "FTP_HOST=${{ secrets['FTP_HOST_'${ENVIRONMENT}] }}" >> $GITHUB_ENV
+          echo "FTP_USER=${{ secrets['FTP_USER_'${ENVIRONMENT}] }}" >> $GITHUB_ENV
+          echo "FTP_PASS=${{ secrets['FTP_PASS_'${ENVIRONMENT}] }}" >> $GITHUB_ENV
+          echo "Environment variables set for ${ENVIRONMENT}."
 
       - name: Deploy to FTP
         uses: BitwaySystem/git-ftp-sync@v1.0.0
@@ -61,3 +60,4 @@ jobs:
           ftp_pass: ${{ env.FTP_PASS }}
           branch: ${{ github.ref }}
           extract_path: "/"
+```
