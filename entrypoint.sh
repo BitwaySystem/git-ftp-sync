@@ -54,7 +54,11 @@ if [ -s changed_files.txt ]; then
   echo "File uploaded to FTP server."
 
   echo "Extracting tar.gz file on FTP server via SSH..."
-  sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST 'tar -xzf changed_files.tar.gz && rm -f changed_files.tar.gz'
+  if [ "$EXTRACT_PATH" != "/" ]; then
+    sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz -C $EXTRACT_PATH && rm -f changed_files.tar.gz"
+  else
+    sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz && rm -f changed_files.tar.gz"
+  fi
   echo "Extraction completed on FTP server."
 else
   echo "No modified files to archive and upload."
