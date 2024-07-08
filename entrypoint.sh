@@ -24,7 +24,11 @@ echo "Fetching origin..."
 git fetch origin
 
 echo "Detecting commit range..."
-BEFORE_SHA=$(git rev-parse HEAD~1)
+if git rev-parse HEAD~1 >/dev/null 2>&1; then
+  BEFORE_SHA=$(git rev-parse HEAD~1)
+else
+  BEFORE_SHA=$(git rev-parse HEAD)
+fi
 AFTER_SHA=$(git rev-parse HEAD)
 echo "Before SHA: $BEFORE_SHA"
 echo "After SHA: $AFTER_SHA"
