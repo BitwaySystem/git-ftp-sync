@@ -31,20 +31,23 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    steps:  
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
       - name: Set environment variables
         run: |
           echo "Setting environment variables based on the branch..."
-          ENVIRONMENT=""
           if [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
-            ENVIRONMENT="QA"
+            echo "FTP_HOST=${{ secrets.FTP_HOST_QA }}" >> $GITHUB_ENV
+            echo "FTP_USER=${{ secrets.FTP_USER_QA }}" >> $GITHUB_ENV
+            echo "FTP_PASS=${{ secrets.FTP_PASS_QA }}" >> $GITHUB_ENV
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            ENVIRONMENT="PD"
+            echo "FTP_HOST=${{ secrets.FTP_HOST_PD }}" >> $GITHUB_ENV
+            echo "FTP_USER=${{ secrets.FTP_USER_PD }}" >> $GITHUB_ENV
+            echo "FTP_PASS=${{ secrets.FTP_PASS_PD }}" >> $GITHUB_ENV
           fi
-          echo "FTP_HOST=${{ secrets['FTP_HOST_'${ENVIRONMENT}] }}" >> $GITHUB_ENV
-          echo "FTP_USER=${{ secrets['FTP_USER_'${ENVIRONMENT}] }}" >> $GITHUB_ENV
-          echo "FTP_PASS=${{ secrets['FTP_PASS_'${ENVIRONMENT}] }}" >> $GITHUB_ENV
-          echo "Environment variables set for ${ENVIRONMENT}."
+          echo "Environment variables set."
 
       - name: Deploy to FTP
         uses: BitwaySystem/git-ftp-sync@v1.0.0
