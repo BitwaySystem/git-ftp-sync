@@ -53,10 +53,6 @@ if [ -s changed_files.txt ]; então
   lftp -u $FTP_USER,$FTP_PASS $FTP_HOST -e "set ftp:ssl-force true; set ssl:verify-certificate false; put changed_files.tar.gz -o changed_files.tar.gz; bye"
   echo "File uploaded to FTP server."
 
-  if [ "$EXTRACT_PATH" != "/" ]; então
-    EXTRACT_PATH=${EXTRACT_PATH%/}  # Remove trailing slash if exists
-  fi
-
   echo "Extracting tar.gz file on FTP server via SSH..."
   sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "
     tar -xzf changed_files.tar.gz -C $EXTRACT_PATH &&
