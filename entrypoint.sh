@@ -10,6 +10,10 @@ BEFORE_SHA=$BEFORE_SHA
 AFTER_SHA=$AFTER_SHA
 EXTRACT_PATH=${EXTRACT_PATH:-"/"}
 
+# Configure the repository as safe
+echo "Configuring Git safe directory..."
+git config --global --add safe.directory /github/workspace
+
 echo "Checking out branch $BRANCH..."
 git checkout $BRANCH
 
