@@ -42,13 +42,11 @@ else
   git diff --diff-filter=D --name-only $BEFORE_SHA $AFTER_SHA > deleted_files.txt || touch deleted_files.txt
 fi
 
-echo "Files modified since last commit:"
-cat changed_files.txt
-
-echo "Files deleted since last commit:"
-cat deleted_files.txt
-
 if [ -s changed_files.txt ]; then
+
+  echo "Files modified since last commit:"
+  cat changed_files.txt
+
   echo "Filtering existing files..."
   grep -Fx -f <(find . -type f | sed 's|^\./||') changed_files.txt > existing_files.txt
   echo "Existing files to be archived:"
@@ -73,7 +71,10 @@ else
   echo "No modified files to archive and upload."
 fi
 
-if [ -s deleted_files.txt ]; then
+if [ -s deleted_files.txt ]; then  
+  echo "Files deleted since last commit:"
+  cat deleted_files.txt
+
   echo "Deleting files on FTP server..."
   sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST 'cat deleted_files.txt | xargs -I {} rm -f {}'
   echo "Deleted files on FTP server."
