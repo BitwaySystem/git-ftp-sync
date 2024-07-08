@@ -5,7 +5,7 @@ set -e
 FTP_HOST=$1
 FTP_USER=$2
 FTP_PASS=$3
-BRANCH=$4
+BRANCH=${4##*/}
 EXTRACT_PATH=${5:-"/"}
 
 # Configure the repository as safe
