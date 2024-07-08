@@ -22,6 +22,7 @@ inputs:
   extract_path:
     description: 'Path to extract files on the FTP server'
     required: false
+    default: '/'
 runs:
   using: 'composite'
   steps:

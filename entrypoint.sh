@@ -8,7 +8,7 @@ FTP_PASS=$FTP_PASS
 BRANCH=$BRANCH
 BEFORE_SHA=$BEFORE_SHA
 AFTER_SHA=$AFTER_SHA
-EXTRACT_PATH=${EXTRACT_PATH:-"."}
+EXTRACT_PATH=${EXTRACT_PATH:-"/"}
 
 echo "Checking out branch $BRANCH..."
 git checkout $BRANCH
@@ -39,11 +39,13 @@ echo "Uploading tar.gz file to FTP server..."
 lftp -u $FTP_USER,$FTP_PASS $FTP_HOST -e "set ftp:ssl-force true; set ssl:verify-certificate false; put changed_files.tar.gz -o changed_files.tar.gz; bye"
 echo "File uploaded to FTP server."
 
-if [ -n "$EXTRACT_PATH" ]; then
-  echo "Extracting tar.gz file on FTP server via SSH..."
-  sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz -C $EXTRACT_PATH && rm -f changed_files.tar.gz"
-  echo "Extraction completed on FTP server."
+if [ "$EXTRACT_PATH" != "/" ]; then
+  EXTRACT_PATH=${EXTRACT_PATH%/}  # Remove trailing slash if exists
 fi
+
+echo "Extracting tar.gz file on FTP server via SSH..."
+sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz -C $EXTRACT_PATH && rm -f changed_files.tar.gz"
+echo "Extraction completed on FTP server."
 
 if [ -s deleted_files.txt ]; then
   echo "Deleting files on FTP server..."
