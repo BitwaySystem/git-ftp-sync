@@ -45,8 +45,8 @@ else
   # Remove deleted files from changed files list
   if [ -s deleted_files.txt ]; then
     echo "Removing deleted files from changed files list..."
-    grep -Fxv -f deleted_files.txt changed_files.txt > changed_files_filtered.txt
-    mv changed_files_filtered.txt changed_files.txt
+    grep -Fxv -f deleted_files.txt changed_files.txt > changed_files_filtered.txt || true
+    mv changed_files_filtered.txt changed_files.txt || true
   fi
 fi
 
