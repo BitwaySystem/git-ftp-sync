@@ -5,9 +5,8 @@ set -e
 FTP_HOST=$FTP_HOST
 FTP_USER=$FTP_USER
 FTP_PASS=$FTP_PASS
-BRANCH=$BRANCH
-BEFORE_SHA=$BEFORE_SHA
-AFTER_SHA=$AFTER_SHA
+BRANCH=${GITHUB_REF##*/}
+EXTRACT_PATH=${EXTRACT_PATH:-"/"}
 
 # Configure the repository as safe
 echo "Configuring Git safe directory..."
@@ -24,7 +23,9 @@ git checkout $BRANCH
 echo "Fetching origin..."
 git fetch origin
 
-echo "Verifying commit range..."
+echo "Detecting commit range..."
+BEFORE_SHA=$(git rev-parse HEAD~1)
+AFTER_SHA=$(git rev-parse HEAD)
 echo "Before SHA: $BEFORE_SHA"
 echo "After SHA: $AFTER_SHA"
 
