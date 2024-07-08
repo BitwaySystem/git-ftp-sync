@@ -1,6 +1,6 @@
 
 # git-ftp-sync
-Automatize o envio de arquivos via FTP do seu repositório GitHub usando este GitHub Action. O `git-ftp-sync`c verifica os arquivos modificados e deletados desde o último commit e sincroniza essas mudanças com um servidor FTP. Este script utiliza FTP para upload dos arquivos e SSH para extração, assumindo que o servidor de destino suporta SSH.
+Automatize o envio de arquivos via FTP do seu repositório GitHub usando este GitHub Action. O `git-ftp-sync` verifica os arquivos modificados e deletados desde o último commit e sincroniza essas mudanças com um servidor FTP. Este script utiliza FTP para upload dos arquivos e SSH para extração, assumindo que o servidor de destino suporte SSH.
 
 ## Inputs
 
