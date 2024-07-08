@@ -1,12 +1,16 @@
-FROM alpine:3.11
+FROM ubuntu:20.04
 
 COPY LICENSE README.md /
 
-RUN apk --no-cache add bash lftp sshpass git && \
-    ln -sf /bin/bash /bin/sh
+RUN apt-get update && apt-get install -y \
+    bash \
+    lftp \
+    sshpass \
+    git \
+    curl
 
 COPY entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
