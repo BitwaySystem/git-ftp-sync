@@ -16,6 +16,10 @@ git checkout $BRANCH
 echo "Fetching origin..."
 git fetch origin
 
+echo "Verifying commit range..."
+echo "Before SHA: $BEFORE_SHA"
+echo "After SHA: $AFTER_SHA"
+
 echo "Getting list of modified and deleted files..."
 git diff --name-only $BEFORE_SHA $AFTER_SHA > changed_files.txt
 git diff --diff-filter=D --name-only $BEFORE_SHA $AFTER_SHA > deleted_files.txt || touch deleted_files.txt
