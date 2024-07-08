@@ -36,20 +36,34 @@ echo "After SHA: $AFTER_SHA"
 if [ "$BEFORE_SHA" == "$AFTER_SHA" ]; then
   echo "First commit detected, archiving all files..."
   find . -type f | sed 's|^\./||' > changed_files.txt
+  touch deleted_files.txt
 else
   echo "Getting list of modified and deleted files..."
   git diff --name-only $BEFORE_SHA $AFTER_SHA > changed_files.txt
   git diff --diff-filter=D --name-only $BEFORE_SHA $AFTER_SHA > deleted_files.txt || touch deleted_files.txt
 fi
 
-# Filter out deleted files from changed files
+# Process deleted files first
 if [ -s deleted_files.txt ]; then
-  echo "Removing deleted files from changed files list..."
-  grep -Fxv -f deleted_files.txt changed_files.txt > changed_files_filtered.txt
-  mv changed_files_filtered.txt changed_files.txt
+  echo "Files deleted since last commit:"
+  cat deleted_files.txt
+
+  echo "Deleting files on FTP server..."
+  sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST 'xargs -I {} rm -f {}' < deleted_files.txt
+  echo "Deleted files on FTP server."
+else
+  echo "No files to delete on FTP server."
 fi
 
+# Process modified files
 if [ -s changed_files.txt ]; then
+
+  # Filter out deleted files from changed files
+  if [ -s deleted_files.txt ]; then
+    echo "Removing deleted files from changed files list..."
+    grep -Fxv -f deleted_files.txt changed_files.txt > changed_files_filtered.txt
+    mv changed_files_filtered.txt changed_files.txt
+  fi
 
   echo "Files modified since last commit:"
   cat changed_files.txt
@@ -76,15 +90,4 @@ if [ -s changed_files.txt ]; then
   echo "Extraction completed on FTP server."
 else
   echo "No modified files to archive and upload."
-fi
-
-if [ -s deleted_files.txt ]; then  
-  echo "Files deleted since last commit:"
-  cat deleted_files.txt
-
-  echo "Deleting files on FTP server..."
-  sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST 'xargs -I {} rm -f {}' < deleted_files.txt
-  echo "Deleted files on FTP server."
-else
-  echo "No files to delete on FTP server."
 fi
