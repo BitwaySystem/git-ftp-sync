@@ -14,7 +14,7 @@ git config --global --add safe.directory /github/workspace
 
 # Install necessary tools
 echo "Installing necessary tools..."
-apt-get update && apt-get install -y lftp sshpass curl
+apt-get update && apt-get install -y lftp sshpass
 echo "Tools installed."
 
 echo "Checking out branch $BRANCH..."
