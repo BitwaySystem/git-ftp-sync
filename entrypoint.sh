@@ -8,7 +8,6 @@ FTP_PASS=$FTP_PASS
 BRANCH=$BRANCH
 BEFORE_SHA=$BEFORE_SHA
 AFTER_SHA=$AFTER_SHA
-EXTRACT_PATH=${EXTRACT_PATH:-"/"}
 
 # Configure the repository as safe
 echo "Configuring Git safe directory..."
@@ -54,7 +53,7 @@ if [ -s changed_files.txt ]; then
   echo "File uploaded to FTP server."
 
   echo "Extracting tar.gz file on FTP server via SSH..."
-  sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST 'tar -xzf changed_files.tar.gz -C '$EXTRACT_PATH' && rm -f changed_files.tar.gz'
+  sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST 'tar -xzf changed_files.tar.gz && rm -f changed_files.tar.gz'
   echo "Extraction completed on FTP server."
 else
   echo "No modified files to archive and upload."
