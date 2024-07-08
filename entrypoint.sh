@@ -33,30 +33,35 @@ AFTER_SHA=$(git rev-parse HEAD)
 echo "Before SHA: $BEFORE_SHA"
 echo "After SHA: $AFTER_SHA"
 
+# Prepare files with headers
+echo "filename" > changed_files.txt
+echo "filename" > deleted_files.txt
+
 if [ "$BEFORE_SHA" == "$AFTER_SHA" ]; then
   echo "First commit detected, archiving all files..."
-  find . -type f | sed 's|^\./||' > changed_files.txt
-  touch deleted_files.txt
+  find . -type f | sed 's|^\./||' >> changed_files.txt
 else
   echo "Getting list of modified and deleted files..."
-  git diff --name-only $BEFORE_SHA $AFTER_SHA > changed_files.txt
-  git diff --diff-filter=D --name-only $BEFORE_SHA $AFTER_SHA > deleted_files.txt || touch deleted_files.txt
+  git diff --name-only $BEFORE_SHA $AFTER_SHA >> changed_files.txt
+  git diff --diff-filter=D --name-only $BEFORE_SHA $AFTER_SHA >> deleted_files.txt || true
 
   # Remove deleted files from changed files list
   if [ -s deleted_files.txt ]; then
     echo "Removing deleted files from changed files list..."
-    grep -Fxv -f deleted_files.txt changed_files.txt > changed_files_filtered.txt || true
-    mv changed_files_filtered.txt changed_files.txt || true
+    grep -Fxv -f <(tail -n +2 deleted_files.txt) <(tail -n +2 changed_files.txt) > changed_files_filtered.txt || true
+    echo "filename" > changed_files.txt
+    cat changed_files_filtered.txt >> changed_files.txt
+    rm changed_files_filtered.txt
   fi
 fi
 
 # Process deleted files
-if [ -s deleted_files.txt ]; then
+if [ $(wc -l < deleted_files.txt) -gt 1 ]; then
   echo "Files deleted since last commit:"
-  cat deleted_files.txt
+  tail -n +2 deleted_files.txt
 
   echo "Deleting files on FTP server..."
-  sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST 'xargs -I {} rm -f {}' < deleted_files.txt
+  sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST 'xargs -I {} rm -f {}' < <(tail -n +2 deleted_files.txt)
   if [ $? -eq 0 ]; then
     echo "Deleted files on FTP server."
   else
@@ -68,18 +73,18 @@ else
 fi
 
 # Process modified files
-if [ -s changed_files.txt ]; then
+if [ $(wc -l < changed_files.txt) -gt 1 ]; then
   echo "Files modified since last commit:"
-  cat changed_files.txt
+  tail -n +2 changed_files.txt
 
   echo "Filtering existing files..."
-  grep -Fx -f <(find . -type f | sed 's|^\./||') changed_files.txt > existing_files.txt
+  grep -Fx -f <(find . -type f | sed 's|^\./||') <(tail -n +2 changed_files.txt) > existing_files.txt
   echo "Existing files to be archived:"
-  cat existing_files.txt
+  tail -n +2 existing_files.txt
 
-  if [ -s existing_files.txt ]; then
+  if [ $(wc -l < existing_files.txt) -gt 1 ]; then
     echo "Creating tar.gz archive of modified files..."
-    tar -czf changed_files.tar.gz -T existing_files.txt
+    tar -czf changed_files.tar.gz -T <(tail -n +2 existing_files.txt)
     if [ $? -eq 0 ]; then
       echo "Archive created: changed_files.tar.gz"
     else
