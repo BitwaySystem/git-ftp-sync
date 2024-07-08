@@ -39,7 +39,7 @@ cat changed_files.txt
 echo "Files deleted since last commit:"
 cat deleted_files.txt
 
-if [ -s changed_files.txt ]; então
+if [ -s changed_files.txt ]; then
   echo "Filtering existing files..."
   grep -Fx -f <(find . -type f | sed 's|^\./||') changed_files.txt > existing_files.txt
   echo "Existing files to be archived:"
@@ -62,7 +62,7 @@ else
   echo "No modified files to archive and upload."
 fi
 
-if [ -s deleted_files.txt ]; então
+if [ -s deleted_files.txt ]; then
   echo "Deleting files on FTP server..."
   sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "
     cat deleted_files.txt | xargs -I {} rm -f {}"
