@@ -6,4 +6,7 @@ RUN apk --no-cache add lftp sshpass
 
 COPY entrypoint.sh /entrypoint.sh
 
+# Adicionar permissões de execução ao entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 ENTRYPOINT ["/entrypoint.sh"]
