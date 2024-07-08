@@ -2,11 +2,11 @@
 
 set -e
 
-FTP_HOST=$FTP_HOST
-FTP_USER=$FTP_USER
-FTP_PASS=$FTP_PASS
-BRANCH=${GITHUB_REF##*/}
-EXTRACT_PATH=${EXTRACT_PATH:-"/"}
+FTP_HOST=$1
+FTP_USER=$2
+FTP_PASS=$3
+BRANCH=$4
+EXTRACT_PATH=${5:-"/"}
 
 # Configure the repository as safe
 echo "Configuring Git safe directory..."
