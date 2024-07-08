@@ -39,7 +39,7 @@ cat changed_files.txt
 echo "Files deleted since last commit:"
 cat deleted_files.txt
 
-if [ -s changed_files.txt ]; then
+if [ -s changed_files.txt ]; então
   echo "Filtering existing files..."
   grep -Fx -f <(find . -type f | sed 's|^\./||') changed_files.txt > existing_files.txt
   echo "Existing files to be archived:"
@@ -53,34 +53,24 @@ if [ -s changed_files.txt ]; then
   lftp -u $FTP_USER,$FTP_PASS $FTP_HOST -e "set ftp:ssl-force true; set ssl:verify-certificate false; put changed_files.tar.gz -o changed_files.tar.gz; bye"
   echo "File uploaded to FTP server."
 
-  if [ "$EXTRACT_PATH" != "/" ]; then
+  if [ "$EXTRACT_PATH" != "/" ]; então
     EXTRACT_PATH=${EXTRACT_PATH%/}  # Remove trailing slash if exists
   fi
 
   echo "Extracting tar.gz file on FTP server via SSH..."
-  if command -v sshpass &> /dev/null; then
-    sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "
-      tar --no-overwrite-dir --no-same-owner -xzf changed_files.tar.gz -C $EXTRACT_PATH &&
-      rm -f changed_files.tar.gz"
-    echo "Extraction completed on FTP server."
-  else
-    echo "sshpass not found. Please ensure sshpass is installed."
-    exit 1
-  fi
+  sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "
+    tar -xzf changed_files.tar.gz -C $EXTRACT_PATH &&
+    rm -f changed_files.tar.gz"
+  echo "Extraction completed on FTP server."
 else
   echo "No modified files to archive and upload."
 fi
 
-if [ -s deleted_files.txt ]; then
+if [ -s deleted_files.txt ]; então
   echo "Deleting files on FTP server..."
-  if command -v sshpass &> /dev/null; then
-    sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "
-      cat deleted_files.txt | xargs -I {} rm -f {}"
-    echo "Deleted files on FTP server."
-  else
-    echo "sshpass not found. Please ensure sshpass is installed."
-    exit 1
-  fi
+  sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "
+    cat deleted_files.txt | xargs -I {} rm -f {}"
+  echo "Deleted files on FTP server."
 else
   echo "No files to delete on FTP server."
 fi
