@@ -31,10 +31,7 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
+    steps:  
       - name: Set environment variables
         run: |
           echo "Setting environment variables based on the branch..."
