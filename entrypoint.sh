@@ -49,16 +49,26 @@ if [ -s changed_files.txt ]; then
   fi
 
   echo "Extracting tar.gz file on FTP server via SSH..."
-  sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz -C $EXTRACT_PATH && rm -f changed_files.tar.gz"
-  echo "Extraction completed on FTP server."
+  if command -v sshpass &> /dev/null; then
+    sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz -C $EXTRACT_PATH && rm -f changed_files.tar.gz"
+    echo "Extraction completed on FTP server."
+  else
+    echo "sshpass not found. Please ensure sshpass is installed."
+    exit 1
+  fi
 else
   echo "No modified files to archive and upload."
 fi
 
 if [ -s deleted_files.txt ]; then
   echo "Deleting files on FTP server..."
-  sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "cat deleted_files.txt | xargs -I {} rm -f {}"
-  echo "Deleted files on FTP server."
+  if command -v sshpass &> /dev/null; then
+    sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "cat deleted_files.txt | xargs -I {} rm -f {}"
+    echo "Deleted files on FTP server."
+  else
+    echo "sshpass not found. Please ensure sshpass is installed."
+    exit 1
+  fi
 else
   echo "No files to delete on FTP server."
 fi
