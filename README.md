@@ -35,9 +35,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Fetch all history for all tags and branches
-        run: git fetch --prune --unshallow
-
       - name: Set environment variables
         run: |
           echo "Setting environment variables based on the branch..."
