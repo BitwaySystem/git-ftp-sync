@@ -56,7 +56,7 @@ jobs:
           echo "Environment variables set."
 
       - name: Deploy to FTP
-        uses: <username>/git-ftp-sync@v1.0.0
+        uses: BitwaySystem/git-ftp-sync@v1.0.0
         with:
           ftp_host: ${{ env.FTP_HOST }}
           ftp_user: ${{ env.FTP_USER }}
