@@ -57,7 +57,12 @@ if [ -s deleted_files.txt ]; then
 
   echo "Deleting files on FTP server..."
   sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST 'xargs -I {} rm -f {}' < deleted_files.txt
-  echo "Deleted files on FTP server."
+  if [ $? -eq 0 ]; then
+    echo "Deleted files on FTP server."
+  else
+    echo "Error deleting files on FTP server."
+    exit 1
+  fi
 else
   echo "No files to delete on FTP server."
 fi
@@ -72,21 +77,40 @@ if [ -s changed_files.txt ]; then
   echo "Existing files to be archived:"
   cat existing_files.txt
 
-  echo "Creating tar.gz archive of modified files..."
-  tar -czf changed_files.tar.gz -T existing_files.txt
-  echo "Archive created: changed_files.tar.gz"
+  if [ -s existing_files.txt ]; then
+    echo "Creating tar.gz archive of modified files..."
+    tar -czf changed_files.tar.gz -T existing_files.txt
+    if [ $? -eq 0 ]; then
+      echo "Archive created: changed_files.tar.gz"
+    else
+      echo "Error creating tar.gz archive."
+      exit 1
+    fi
 
-  echo "Uploading tar.gz file to FTP server..."
-  lftp -u $FTP_USER,$FTP_PASS -e "set ftp:ssl-force true; set ssl:verify-certificate false; put changed_files.tar.gz -o changed_files.tar.gz; bye" $FTP_HOST
-  echo "File uploaded to FTP server."
+    echo "Uploading tar.gz file to FTP server..."
+    lftp -u $FTP_USER,$FTP_PASS -e "set ftp:ssl-force true; set ssl:verify-certificate false; put changed_files.tar.gz -o changed_files.tar.gz; bye" $FTP_HOST
+    if [ $? -eq 0 ]; then
+      echo "File uploaded to FTP server."
+    else
+      echo "Error uploading file to FTP server."
+      exit 1
+    fi
 
-  echo "Extracting tar.gz file on FTP server via SSH..."
-  if [ "$EXTRACT_PATH" != "/" ]; then
-    sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz -C $EXTRACT_PATH && rm -f changed_files.tar.gz"
+    echo "Extracting tar.gz file on FTP server via SSH..."
+    if [ "$EXTRACT_PATH" != "/" ]; then
+      sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz -C $EXTRACT_PATH && rm -f changed_files.tar.gz"
+    else
+      sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz && rm -f changed_files.tar.gz"
+    fi
+    if [ $? -eq 0 ]; then
+      echo "Extraction completed on FTP server."
+    else
+      echo "Error extracting tar.gz file on FTP server."
+      exit 1
+    fi
   else
-    sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz && rm -f changed_files.tar.gz"
+    echo "No existing files to archive and upload."
   fi
-  echo "Extraction completed on FTP server."
 else
   echo "No modified files to archive and upload."
 fi
