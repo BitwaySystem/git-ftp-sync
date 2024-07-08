@@ -20,12 +20,13 @@ inputs:
 runs:
   using: 'docker'
   image: 'Dockerfile'
+  entrypoint: '/entrypoint.sh'
   args:
-    - ftp_host=${{ inputs.ftp_host }}
-    - ftp_user=${{ inputs.ftp_user }}
-    - ftp_pass=${{ inputs.ftp_pass }}
-    - branch=${{ inputs.branch }}
-    - extract_path=${{ inputs.extract_path }}
+    - ${{ inputs.ftp_host }}
+    - ${{ inputs.ftp_user }}
+    - ${{ inputs.ftp_pass }}
+    - ${{ inputs.branch }}
+    - ${{ inputs.extract_path }}
 branding:
   color: 'red'
   icon: 'upload-cloud'

@@ -50,7 +50,7 @@ if [ -s changed_files.txt ]; then
   echo "Archive created: changed_files.tar.gz"
 
   echo "Uploading tar.gz file to FTP server..."
-  lftp -u $FTP_USER,$FTP_PASS $FTP_HOST -e "set ftp:ssl-force true; set ssl:verify-certificate false; put changed_files.tar.gz -o changed_files.tar.gz; bye"
+  lftp -u $FTP_USER,$FTP_PASS -e "set ftp:ssl-force true; set ssl:verify-certificate false; put changed_files.tar.gz -o changed_files.tar.gz; bye" $FTP_HOST
   echo "File uploaded to FTP server."
 
   echo "Extracting tar.gz file on FTP server via SSH..."
