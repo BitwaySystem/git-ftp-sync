@@ -73,7 +73,7 @@ fi
 
 if [ -s deleted_files.txt ]; then
   echo "Deleting files on FTP server..."
-  if command -v sshpass &> /dev/null; então
+  if command -v sshpass &> /dev/null; then
     sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "
       cat deleted_files.txt | xargs -I {} rm -f {}"
     echo "Deleted files on FTP server."
