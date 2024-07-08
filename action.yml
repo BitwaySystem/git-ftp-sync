@@ -1,0 +1,42 @@
+name: 'Git FTP Sync'
+description: 'Deploy and delete files on FTP server based on Git changes'
+inputs:
+  ftp_host:
+    description: 'FTP host'
+    required: true
+  ftp_user:
+    description: 'FTP user'
+    required: true
+  ftp_pass:
+    description: 'FTP password'
+    required: true
+  branch:
+    description: 'Branch name'
+    required: true
+  before_sha:
+    description: 'Previous commit SHA'
+    required: true
+  after_sha:
+    description: 'Current commit SHA'
+    required: true
+  extract_path:
+    description: 'Path to extract files on the FTP server'
+    required: false
+runs:
+  using: 'composite'
+  steps:
+    - name: Install dependencies
+      run: |
+        apt-get update && apt-get install -y lftp sshpass
+    - name: Run script
+      run: |
+        /entrypoint.sh
+      shell: bash
+      env:
+        FTP_HOST: ${{ inputs.ftp_host }}
+        FTP_USER: ${{ inputs.ftp_user }}
+        FTP_PASS: ${{ inputs.ftp_pass }}
+        BRANCH: ${{ inputs.branch }}
+        BEFORE_SHA: ${{ inputs.before_sha }}
+        AFTER_SHA: ${{ inputs.after_sha }}
+        EXTRACT_PATH: ${{ inputs.extract_path }}
