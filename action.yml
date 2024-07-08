@@ -24,22 +24,16 @@ inputs:
     required: false
     default: '/'
 runs:
-  using: 'composite'
-  steps:
-    - name: Install dependencies
-      run: |
-        sudo apt-get update && sudo apt-get install -y lftp sshpass
-      shell: bash
-    - name: Run script
-      run: |
-        ./entrypoint.sh
-      shell: bash
-      working-directory: .
-      env:
-        FTP_HOST: ${{ inputs.ftp_host }}
-        FTP_USER: ${{ inputs.ftp_user }}
-        FTP_PASS: ${{ inputs.ftp_pass }}
-        BRANCH: ${{ inputs.branch }}
-        BEFORE_SHA: ${{ inputs.before_sha }}
-        AFTER_SHA: ${{ inputs.after_sha }}
-        EXTRACT_PATH: ${{ inputs.extract_path }}
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ftp_host=${{ inputs.ftp_host }}
+    - ftp_user=${{ inputs.ftp_user }}
+    - ftp_pass=${{ inputs.ftp_pass }}
+    - branch=${{ inputs.branch }}
+    - before_sha=${{ inputs.before_sha }}
+    - after_sha=${{ inputs.after_sha }}
+    - extract_path=${{ inputs.extract_path }}
+branding:
+  color: 'red'
+  icon: 'upload-cloud'
