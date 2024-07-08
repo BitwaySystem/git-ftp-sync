@@ -60,7 +60,7 @@ if [ -s changed_files.txt ]; then
   echo "Extracting tar.gz file on FTP server via SSH..."
   if command -v sshpass &> /dev/null; then
     sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "
-      tar -xzf changed_files.tar.gz -C $EXTRACT_PATH &&
+      tar --no-overwrite-dir --no-same-owner -xzf changed_files.tar.gz -C $EXTRACT_PATH &&
       rm -f changed_files.tar.gz"
     echo "Extraction completed on FTP server."
   else
