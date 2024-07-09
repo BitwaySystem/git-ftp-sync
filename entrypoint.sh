@@ -33,37 +33,41 @@ AFTER_SHA=$(git rev-parse HEAD)
 echo "Before SHA: $BEFORE_SHA"
 echo "After SHA: $AFTER_SHA"
 
-# Prepare files with headers
-echo "filename" > changed_files.txt
-echo "deleted_file_nome_do_arquivo" > deleted_files.txt
+# Prepare files
+> changed_files.txt
+> deleted_files.txt
 
 if [ "$BEFORE_SHA" == "$AFTER_SHA" ]; then
   echo "First commit detected, archiving all files..."
   find . -type f | sed 's|^\./||' >> changed_files.txt
 else
   echo "Getting list of modified and deleted files..."
-  git diff --name-only --diff-filter=ACMRT $BEFORE_SHA $AFTER_SHA >> changed_files.txt
+  git diff --name-only --diff-filter=ACMRT $BEFORE_SHA $AFTER_SHA >> changed_files.txt || true
   git diff --diff-filter=D --name-only $BEFORE_SHA $AFTER_SHA >> deleted_files.txt || true
 fi
 
+# Debug: Display the contents of the deleted_files.txt
+echo "Contents of deleted_files.txt:"
+cat deleted_files.txt
+
 # Process deleted files
-if [ $(wc -l < deleted_files.txt) -gt 1 ]; then
+if [ -s deleted_files.txt ]; then
   echo "Files deleted since last commit:"
-  tail -n +2 deleted_files.txt > deleted_files_list.txt
-  
+  cat deleted_files.txt
+
   echo "Deleting files on FTP server..."
   while IFS= read -r file; do
+    echo "Deleting $file from FTP server..."
     sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "rm -f $EXTRACT_PATH/$file"
-  done < deleted_files_list.txt
+  done < deleted_files.txt
 
   echo "Creating tar.gz archive of deleted files list..."
-  tar -czf deleted_files_list.tar.gz deleted_files_list.txt
-  rm deleted_files_list.txt
+  tar -czf deleted_files_list.tar.gz deleted_files.txt
 fi
 
 # Process modified files
 echo "Creating tar.gz archive of modified files..."
-tar -czf changed_files.tar.gz -T <(tail -n +2 changed_files.txt)
+tar -czf changed_files.tar.gz -T changed_files.txt
 if [ $? -eq 0 ]; then
   echo "Archive created: changed_files.tar.gz"
 else
