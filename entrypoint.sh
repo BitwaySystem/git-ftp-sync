@@ -46,10 +46,6 @@ else
   git diff --diff-filter=D --name-only $BEFORE_SHA $AFTER_SHA >> deleted_files.txt || true
 fi
 
-# Debug: Display the contents of the deleted_files.txt
-echo "Contents of deleted_files.txt:"
-cat deleted_files.txt
-
 # Process deleted files
 if [ -s deleted_files.txt ]; then
   echo "Files deleted since last commit:"
@@ -58,47 +54,56 @@ if [ -s deleted_files.txt ]; then
   echo "Deleting files on FTP server..."
   while IFS= read -r file; do
     echo "Deleting $file from FTP server..."
-    sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "rm -f $EXTRACT_PATH/$file"
+    sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "rm -f $EXTRACT_PATH/$file" || {
+      echo "Failed to delete $file from FTP server"
+      continue
+    }
   done < deleted_files.txt
 
   echo "Creating tar.gz archive of deleted files list..."
   tar -czf deleted_files_list.tar.gz deleted_files.txt
-fi
-
-# Process modified files
-echo "Creating tar.gz archive of modified files..."
-tar -czf changed_files.tar.gz -T changed_files.txt
-if [ $? -eq 0 ]; then
-  echo "Archive created: changed_files.tar.gz"
 else
-  echo "Error creating tar.gz archive."
-  exit 1
+  echo "No deleted files to process."
 fi
 
-if [ -f changed_files.tar.gz ]; then
-  echo "Uploading changed_files.tar.gz to FTP server..."
-  lftp -u $FTP_USER,$FTP_PASS -e "set ftp:ssl-force true; set ssl:verify-certificate false; put changed_files.tar.gz -o changed_files.tar.gz; bye" $FTP_HOST
+# Process modified files if any
+if [ -s changed_files.txt ]; then
+  echo "Creating tar.gz archive of modified files..."
+  tar -czf changed_files.tar.gz -T changed_files.txt
   if [ $? -eq 0 ]; then
-    echo "File uploaded to FTP server."
+    echo "Archive created: changed_files.tar.gz"
   else
-    echo "Error uploading file to FTP server."
+    echo "Error creating tar.gz archive."
     exit 1
   fi
 
-  echo "Extracting changed_files.tar.gz on FTP server via SSH..."
-  if [ "$EXTRACT_PATH" != "/" ]; then
-    sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz -C $EXTRACT_PATH && rm -f changed_files.tar.gz"
+  if [ -f changed_files.tar.gz ]; then
+    echo "Uploading changed_files.tar.gz to FTP server..."
+    lftp -u $FTP_USER,$FTP_PASS -e "set ftp:ssl-force true; set ssl:verify-certificate false; put changed_files.tar.gz -o changed_files.tar.gz; bye" $FTP_HOST
+    if [ $? -eq 0 ]; then
+      echo "File uploaded to FTP server."
+    else
+      echo "Error uploading file to FTP server."
+      exit 1
+    fi
+
+    echo "Extracting changed_files.tar.gz on FTP server via SSH..."
+    if [ "$EXTRACT_PATH" != "/" ]; then
+      sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz -C $EXTRACT_PATH && rm -f changed_files.tar.gz"
+    else
+      sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz && rm -f changed_files.tar.gz"
+    fi
+    if [ $? -eq 0 ]; then
+      echo "Extraction completed on FTP server."
+    else
+      echo "Error extracting changed_files.tar.gz on FTP server."
+      exit 1
+    fi
   else
-    sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz && rm -f changed_files.tar.gz"
-  fi
-  if [ $? -eq 0 ]; then
-    echo "Extraction completed on FTP server."
-  else
-    echo "Error extracting changed_files.tar.gz on FTP server."
-    exit 1
+    echo "No modified files to archive and upload."
   fi
 else
-  echo "No modified files to archive and upload."
+  echo "No modified files to process."
 fi
 
 # Prepare report for Discord
@@ -118,3 +123,4 @@ fi
 rm -f changed_files.tar.gz deleted_files_list.tar.gz
 
 echo "Report prepared: resume_deploy.tar.gz"
+echo "Clean up completed."
