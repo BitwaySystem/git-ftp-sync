@@ -48,10 +48,8 @@ else
   # Remove deleted files from changed files list
   if [ -s deleted_files.txt ]; then
     echo "Removing deleted files from changed files list..."
-    grep -Fxv -f <(sed 's|^deleted_file_||' deleted_files.txt) <(tail -n +2 changed_files.txt) > changed_files_filtered.txt || true
-    echo "filename" > changed_files.txt
-    cat changed_files_filtered.txt >> changed_files.txt
-    rm changed_files_filtered.txt
+    grep -Fxv -f <(sed 's|^deleted_file_||' deleted_files.txt) changed_files.txt > changed_files_filtered.txt || true
+    mv changed_files_filtered.txt changed_files.txt
   fi
 fi
 
@@ -78,7 +76,7 @@ if [ $(wc -l < changed_files.txt) -gt 1 ]; then
   tail -n +2 changed_files.txt
 
   echo "Filtering existing files..."
-  grep -Fx -f <(find . -type f | sed 's|^\./||') <(tail -n +2 changed_files.txt) > existing_files.txt
+  grep -Fx -f <(find . -type f | sed 's|^\./||') changed_files.txt > existing_files.txt
   echo "Existing files to be archived:"
   tail -n +2 existing_files.txt
 
