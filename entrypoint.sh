@@ -110,7 +110,7 @@ else
 fi
 
 # Prepare report for recovery
-echo "Creating resume_deploy.tar.gz for Discord..."
+echo "Creating resume_deploy.tar.gz for recovery..."
 if [ -f changed_files.tar.gz ] && [ -f deleted_files_list.tar.gz ]; then
   tar -czf resume_deploy.tar.gz changed_files.tar.gz deleted_files_list.tar.gz
 elif [ -f changed_files.tar.gz ]; then
