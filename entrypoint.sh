@@ -40,8 +40,7 @@ echo "After SHA: $AFTER_SHA"
 if [ "$BEFORE_SHA" == "$AFTER_SHA" ]; then
   echo "First commit detected, archiving all files..."
   find . -type f | sed 's|^\./||' >> changed_files.txt
-else
-  echo "Getting list of modified and deleted files..."
+else  
   git diff --name-only --diff-filter=ACMRT $BEFORE_SHA $AFTER_SHA >> changed_files.txt || true
   git diff --diff-filter=D --name-only $BEFORE_SHA $AFTER_SHA >> deleted_files.txt || true
 fi
@@ -54,7 +53,7 @@ if [ -s deleted_files.txt ]; then
   echo "Deleting files on FTP server..."
   while IFS= read -r file; do
     echo "Deleting $file from FTP server..."
-    sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "rm -f $EXTRACT_PATH/$file" || {
+    lftp -u $FTP_USER,$FTP_PASS -e "set ftp:ssl-force true; set ssl:verify-certificate false; rm $EXTRACT_PATH/$file; bye" $FTP_HOST || {
       echo "Failed to delete $file from FTP server"
       continue
     }
@@ -68,6 +67,10 @@ fi
 
 # Process modified files if any
 if [ -s changed_files.txt ]; then
+
+  echo "Files changed since last commit:"
+  cat changed_files.txt
+
   echo "Creating tar.gz archive of modified files..."
   tar -czf changed_files.tar.gz -T changed_files.txt
   if [ $? -eq 0 ]; then
