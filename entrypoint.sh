@@ -42,21 +42,17 @@ if [ "$BEFORE_SHA" == "$AFTER_SHA" ]; then
   find . -type f | sed 's|^\./||' >> changed_files.txt
 else
   echo "Getting list of modified and deleted files..."
-  git diff --name-only $BEFORE_SHA $AFTER_SHA >> changed_files.txt
+  git diff --name-only --diff-filter=ACMRT $BEFORE_SHA $AFTER_SHA >> changed_files.txt
   git diff --diff-filter=D --name-only $BEFORE_SHA $AFTER_SHA | sed 's|^|deleted_file_|' >> deleted_files.txt || true
-
-  # Remove deleted files from changed files list
-  if [ -s deleted_files.txt ]; then
-    echo "Removing deleted files from changed files list..."
-    grep -Fxv -f <(sed 's|^deleted_file_||' deleted_files.txt) changed_files.txt > changed_files_filtered.txt || true
-    mv changed_files_filtered.txt changed_files.txt
-  fi
 fi
 
 # Process deleted files
 if [ $(wc -l < deleted_files.txt) -gt 1 ]; then
   echo "Files deleted since last commit:"
   tail -n +2 deleted_files.txt > deleted_files_list.txt
+  echo "Creating tar.gz archive of deleted files list..."
+  tar -czf deleted_files_list.tar.gz deleted_files_list.txt
+  rm deleted_files_list.txt
 fi
 
 # Process modified files
@@ -69,17 +65,8 @@ else
   exit 1
 fi
 
-# Add the deleted files list to the tar.gz archive
-if [ -f deleted_files_list.txt ]; then
-  tar --append --file=changed_files.tar.gz deleted_files_list.txt
-  rm deleted_files_list.txt
-fi
-
-if [ $(wc -l < changed_files.txt) -gt 1 ]; then
-  echo "Files modified since last commit:"
-  tail -n +2 changed_files.txt
-
-  echo "Uploading tar.gz file to FTP server..."
+if [ -f changed_files.tar.gz ]; then
+  echo "Uploading changed_files.tar.gz to FTP server..."
   lftp -u $FTP_USER,$FTP_PASS -e "set ftp:ssl-force true; set ssl:verify-certificate false; put changed_files.tar.gz -o changed_files.tar.gz; bye" $FTP_HOST
   if [ $? -eq 0 ]; then
     echo "File uploaded to FTP server."
@@ -88,7 +75,7 @@ if [ $(wc -l < changed_files.txt) -gt 1 ]; then
     exit 1
   fi
 
-  echo "Extracting tar.gz file on FTP server via SSH..."
+  echo "Extracting changed_files.tar.gz on FTP server via SSH..."
   if [ "$EXTRACT_PATH" != "/" ]; then
     sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz -C $EXTRACT_PATH && rm -f changed_files.tar.gz"
   else
@@ -97,7 +84,7 @@ if [ $(wc -l < changed_files.txt) -gt 1 ]; then
   if [ $? -eq 0 ]; then
     echo "Extraction completed on FTP server."
   else
-    echo "Error extracting tar.gz file on FTP server."
+    echo "Error extracting changed_files.tar.gz on FTP server."
     exit 1
   fi
 else
@@ -105,17 +92,8 @@ else
 fi
 
 # Prepare report for Discord
-echo "Preparing report for Discord..."
-{
-  echo "Modified files:"
-  tail -n +2 changed_files.txt
-  echo ""
-  echo "Deleted files:"
-  tail -n +2 deleted_files.txt
-} > discord_report.txt
+echo "Creating resume_deploy.tar.gz for Discord..."
+tar -czf resume_deploy.tar.gz changed_files.tar.gz deleted_files_list.tar.gz
+rm changed_files.tar.gz deleted_files_list.tar.gz
 
-echo "Adding discord_report.txt to the tar.gz archive..."
-tar --append --file=changed_files.tar.gz discord_report.txt
-rm discord_report.txt
-
-echo "Report prepared: changed_files.tar.gz"
+echo "Report prepared: resume_deploy.tar.gz"
