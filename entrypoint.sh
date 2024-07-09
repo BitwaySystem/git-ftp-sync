@@ -43,7 +43,7 @@ if [ "$BEFORE_SHA" == "$AFTER_SHA" ]; then
 else
   echo "Getting list of modified and deleted files..."
   git diff --name-only --diff-filter=ACMRT $BEFORE_SHA $AFTER_SHA >> changed_files.txt
-  git diff --diff-filter=D --name-only $BEFORE_SHA $AFTER_SHA | sed 's|^|deleted_file_|' >> deleted_files.txt || true
+  git diff --diff-filter=D --name-only $BEFORE_SHA $AFTER_SHA >> deleted_files.txt || true
 fi
 
 # Process deleted files
@@ -93,7 +93,18 @@ fi
 
 # Prepare report for Discord
 echo "Creating resume_deploy.tar.gz for Discord..."
-tar -czf resume_deploy.tar.gz changed_files.tar.gz deleted_files_list.tar.gz
-rm changed_files.tar.gz deleted_files_list.tar.gz
+if [ -f changed_files.tar.gz ] && [ -f deleted_files_list.tar.gz ]; then
+  tar -czf resume_deploy.tar.gz changed_files.tar.gz deleted_files_list.tar.gz
+elif [ -f changed_files.tar.gz ]; then
+  tar -czf resume_deploy.tar.gz changed_files.tar.gz
+elif [ -f deleted_files_list.tar.gz ]; then
+  tar -czf resume_deploy.tar.gz deleted_files_list.tar.gz
+else
+  echo "No files to include in resume_deploy.tar.gz"
+  exit 0
+fi
+
+# Clean up
+rm -f changed_files.tar.gz deleted_files_list.tar.gz
 
 echo "Report prepared: resume_deploy.tar.gz"
