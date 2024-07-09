@@ -50,6 +50,12 @@ fi
 if [ $(wc -l < deleted_files.txt) -gt 1 ]; then
   echo "Files deleted since last commit:"
   tail -n +2 deleted_files.txt > deleted_files_list.txt
+  
+  echo "Deleting files on FTP server..."
+  while IFS= read -r file; do
+    sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "rm -f $EXTRACT_PATH/$file"
+  done < deleted_files_list.txt
+
   echo "Creating tar.gz archive of deleted files list..."
   tar -czf deleted_files_list.tar.gz deleted_files_list.txt
   rm deleted_files_list.txt
