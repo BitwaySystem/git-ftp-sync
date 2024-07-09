@@ -35,7 +35,7 @@ echo "After SHA: $AFTER_SHA"
 
 # Prepare files with headers
 echo "filename" > changed_files.txt
-echo "filename" > deleted_files.txt
+echo "deleted_file_nome_do_arquivo" > deleted_files.txt
 
 if [ "$BEFORE_SHA" == "$AFTER_SHA" ]; then
   echo "First commit detected, archiving all files..."
@@ -119,3 +119,14 @@ if [ $(wc -l < changed_files.txt) -gt 1 ]; then
 else
   echo "No modified files to archive and upload."
 fi
+
+# Prepare report for Discord
+echo "Preparing report for Discord..."
+{
+  echo "Modified files:"
+  tail -n +2 changed_files.txt
+  echo ""
+  echo "Deleted files:"
+  tail -n +2 deleted_files.txt
+} > discord_report.txt
+echo "Report prepared: discord_report.txt"
