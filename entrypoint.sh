@@ -56,63 +56,49 @@ fi
 # Process deleted files
 if [ $(wc -l < deleted_files.txt) -gt 1 ]; then
   echo "Files deleted since last commit:"
-  tail -n +2 deleted_files.txt
-
-  echo "Deleting files on FTP server..."
-  sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST 'xargs -I {} rm -f {}' < <(sed 's|^deleted_file_||' <(tail -n +2 deleted_files.txt))
-  if [ $? -eq 0 ]; then
-    echo "Deleted files on FTP server."
-  else
-    echo "Error deleting files on FTP server."
-    exit 1
-  fi
-else
-  echo "No files to delete on FTP server."
+  tail -n +2 deleted_files.txt > deleted_files_list.txt
 fi
 
 # Process modified files
+echo "Creating tar.gz archive of modified files..."
+tar -czf changed_files.tar.gz -T <(tail -n +2 changed_files.txt)
+if [ $? -eq 0 ]; then
+  echo "Archive created: changed_files.tar.gz"
+else
+  echo "Error creating tar.gz archive."
+  exit 1
+fi
+
+# Add the deleted files list to the tar.gz archive
+if [ -f deleted_files_list.txt ]; then
+  tar --append --file=changed_files.tar.gz deleted_files_list.txt
+  rm deleted_files_list.txt
+fi
+
 if [ $(wc -l < changed_files.txt) -gt 1 ]; then
   echo "Files modified since last commit:"
   tail -n +2 changed_files.txt
 
-  echo "Filtering existing files..."
-  grep -Fx -f <(find . -type f | sed 's|^\./||') changed_files.txt > existing_files.txt
-  echo "Existing files to be archived:"
-  tail -n +2 existing_files.txt
-
-  if [ $(wc -l < existing_files.txt) -gt 1 ]; then
-    echo "Creating tar.gz archive of modified files..."
-    tar -czf changed_files.tar.gz -T <(tail -n +2 existing_files.txt)
-    if [ $? -eq 0 ]; then
-      echo "Archive created: changed_files.tar.gz"
-    else
-      echo "Error creating tar.gz archive."
-      exit 1
-    fi
-
-    echo "Uploading tar.gz file to FTP server..."
-    lftp -u $FTP_USER,$FTP_PASS -e "set ftp:ssl-force true; set ssl:verify-certificate false; put changed_files.tar.gz -o changed_files.tar.gz; bye" $FTP_HOST
-    if [ $? -eq 0 ]; then
-      echo "File uploaded to FTP server."
-    else
-      echo "Error uploading file to FTP server."
-      exit 1
-    fi
-
-    echo "Extracting tar.gz file on FTP server via SSH..."
-    if [ "$EXTRACT_PATH" != "/" ]; then
-      sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz -C $EXTRACT_PATH && rm -f changed_files.tar.gz"
-    else
-      sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz && rm -f changed_files.tar.gz"
-    fi
-    if [ $? -eq 0 ]; then
-      echo "Extraction completed on FTP server."
-    else
-      echo "Error extracting tar.gz file on FTP server."
-      exit 1
-    fi
+  echo "Uploading tar.gz file to FTP server..."
+  lftp -u $FTP_USER,$FTP_PASS -e "set ftp:ssl-force true; set ssl:verify-certificate false; put changed_files.tar.gz -o changed_files.tar.gz; bye" $FTP_HOST
+  if [ $? -eq 0 ]; then
+    echo "File uploaded to FTP server."
   else
-    echo "No existing files to archive and upload."
+    echo "Error uploading file to FTP server."
+    exit 1
+  fi
+
+  echo "Extracting tar.gz file on FTP server via SSH..."
+  if [ "$EXTRACT_PATH" != "/" ]; then
+    sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz -C $EXTRACT_PATH && rm -f changed_files.tar.gz"
+  else
+    sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST "tar -xzf changed_files.tar.gz && rm -f changed_files.tar.gz"
+  fi
+  if [ $? -eq 0 ]; then
+    echo "Extraction completed on FTP server."
+  else
+    echo "Error extracting tar.gz file on FTP server."
+    exit 1
   fi
 else
   echo "No modified files to archive and upload."
@@ -127,4 +113,9 @@ echo "Preparing report for Discord..."
   echo "Deleted files:"
   tail -n +2 deleted_files.txt
 } > discord_report.txt
-echo "Report prepared: discord_report.txt"
+
+echo "Adding discord_report.txt to the tar.gz archive..."
+tar --append --file=changed_files.tar.gz discord_report.txt
+rm discord_report.txt
+
+echo "Report prepared: changed_files.tar.gz"
