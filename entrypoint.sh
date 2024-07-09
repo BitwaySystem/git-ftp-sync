@@ -43,12 +43,12 @@ if [ "$BEFORE_SHA" == "$AFTER_SHA" ]; then
 else
   echo "Getting list of modified and deleted files..."
   git diff --name-only $BEFORE_SHA $AFTER_SHA >> changed_files.txt
-  git diff --diff-filter=D --name-only $BEFORE_SHA $AFTER_SHA >> deleted_files.txt || true
+  git diff --diff-filter=D --name-only $BEFORE_SHA $AFTER_SHA | sed 's|^|deleted_file_|' >> deleted_files.txt || true
 
   # Remove deleted files from changed files list
   if [ -s deleted_files.txt ]; then
     echo "Removing deleted files from changed files list..."
-    grep -Fxv -f <(tail -n +2 deleted_files.txt) <(tail -n +2 changed_files.txt) > changed_files_filtered.txt || true
+    grep -Fxv -f <(sed 's|^deleted_file_||' deleted_files.txt) <(tail -n +2 changed_files.txt) > changed_files_filtered.txt || true
     echo "filename" > changed_files.txt
     cat changed_files_filtered.txt >> changed_files.txt
     rm changed_files_filtered.txt
@@ -61,7 +61,7 @@ if [ $(wc -l < deleted_files.txt) -gt 1 ]; then
   tail -n +2 deleted_files.txt
 
   echo "Deleting files on FTP server..."
-  sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST 'xargs -I {} rm -f {}' < <(tail -n +2 deleted_files.txt)
+  sshpass -p $FTP_PASS ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $FTP_USER@$FTP_HOST 'xargs -I {} rm -f {}' < <(sed 's|^deleted_file_||' <(tail -n +2 deleted_files.txt))
   if [ $? -eq 0 ]; then
     echo "Deleted files on FTP server."
   else
