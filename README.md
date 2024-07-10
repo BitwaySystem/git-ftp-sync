@@ -1,21 +1,23 @@
+
 # git-ftp-sync
-Automatize o envio de arquivos via FTP do seu repositório GitHub usando este GitHub Action. O `git-ftp-sync` verifica os arquivos modificados e deletados desde o último commit e sincroniza essas mudanças com um servidor FTP. Este script utiliza FTP para upload dos arquivos e SSH para extração, assumindo que o servidor de destino suporte SSH.
+
+Automate the upload of files via FTP from your GitHub repository using this GitHub Action. The `git-ftp-sync` checks for modified and deleted files since the last commit and syncs these changes with an FTP server. This script uses FTP for file upload and SSH for extraction, assuming the target server supports SSH.
 
 ## Inputs
 
-- `ftp_host`: O host do servidor FTP.
-- `ftp_user`: O usuário para autenticação FTP.
-- `ftp_pass`: A senha para autenticação FTP.
-- `branch`: O branch a ser usado para o deploy.
-- `extract_path`: (Opcional) O caminho onde os arquivos serão extraídos no servidor FTP. O padrão é a raiz (`/`).
+- `ftp_host`: The FTP server host.
+- `ftp_user`: The user for FTP authentication.
+- `ftp_pass`: The password for FTP authentication.
+- `branch`: The branch to be used for deployment.
+- `extract_path`: (Optional) The path where the files will be extracted on the FTP server. The default is the root (`/`).
 
 ## Outputs
 
-- `resume_deploy.tar.gz`: Um arquivo que contém informações sobre os arquivos modificados e deletados durante o deploy.
+- `resume_deploy.tar.gz`: A file that contains information about the modified and deleted files during the deployment.
 
-## Exemplo de Uso
+## Usage Example
 
-Aqui está um exemplo de como usar este GitHub Action em seu workflow:
+Here is an example of how to use this GitHub Action in your workflow:
 
 ```yaml
 name: Deploy via FTP
@@ -59,3 +61,7 @@ jobs:
           branch: ${{ github.ref }}
           extract_path: "/"
 ```
+
+## License
+
+This project is licensed under the MIT License.
